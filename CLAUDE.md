@@ -174,11 +174,16 @@ func (r *EntityRepository) Delete(id uint) error
 
 ### Route Organization
 - **RESTful Patterns**: Follow REST conventions for URLs
-- **API Versioning**: Use `/api/v1/` prefix
+- **API Versioning**: Use `/api/v1/` prefix for main API routes
 - **Route Groups**: Group related routes together
+- **Health Check**: Always include `/healthz` endpoint for service health monitoring
 
 ```go
 // Example route structure
+// Health check (no versioning)
+e.GET("/healthz", handler.HealthCheck)
+
+// Main API routes
 api := e.Group("/api/v1")
 api.POST("/entities", handler.CreateEntity)           // CREATE
 api.GET("/entities", handler.GetEntities)             // READ (all)
@@ -186,6 +191,13 @@ api.GET("/entities/:id", handler.GetEntity)           // READ (by ID)
 api.PUT("/entities/:id", handler.UpdateEntity)        // UPDATE
 api.DELETE("/entities/:id", handler.DeleteEntity)     // DELETE
 ```
+
+### Health Check Requirements
+- **Endpoint Path**: `/healthz` (not versioned, directly on root)
+- **Method**: GET only
+- **Authentication**: None required (public endpoint)
+- **Response**: JSON with service status, timestamp, and version
+- **Purpose**: Used by load balancers, monitoring systems, and deployment tools
 
 ## Development Commands Pattern
 

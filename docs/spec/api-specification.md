@@ -31,6 +31,25 @@ Authorization: Bearer <jwt_token>
 }
 ```
 
+## System Endpoints
+
+### Health Check
+```http
+GET /healthz
+```
+
+**Response (200):**
+```json
+{
+  "data": {
+    "status": "healthy",
+    "timestamp": "2024-01-01T12:00:00Z",
+    "version": "1.0.0"
+  },
+  "message": "Service is healthy"
+}
+```
+
 ## Authentication Endpoints
 
 ### Register User
