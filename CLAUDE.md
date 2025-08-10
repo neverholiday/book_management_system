@@ -262,6 +262,77 @@ golangci-lint run
 - **Environment Variables**: Never commit .env files
 - **Rate Limiting**: Implement per-endpoint rate limiting as needed
 
+## Git and Version Control Rules
+
+### .gitignore Requirements
+Always create a comprehensive `.gitignore` file that excludes:
+
+```gitignore
+# Go-specific files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+*.test
+*.out
+go.work
+
+# Environment and configuration files (CRITICAL)
+.env
+.env.*
+*.env
+config.local.*
+settings.local.*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+.tmp/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Build artifacts
+build/
+*.tar.gz
+*.zip
+
+# Certificate and security files
+*.pem
+*.key
+*.crt
+*.cert
+```
+
+### Git Security Rules
+- **Never Commit Secrets**: Environment files, API keys, passwords, certificates
+- **Early Setup**: Create `.gitignore` before first commit to prevent accidents
+- **Comprehensive Coverage**: Include IDE, OS, build artifacts, and language-specific files
+- **Documentation**: Comment critical exclusions in `.gitignore` for team awareness
+
 This structure provides a scalable, maintainable foundation for Go backend services in a monorepo architecture.
 
 ## Task Management and Documentation
