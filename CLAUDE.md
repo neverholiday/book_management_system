@@ -216,11 +216,6 @@ golangci-lint run
 
 ## Database Setup Rules
 
-### UTC Enforcement
-- **Application Level**: Set `time.Local = time.UTC` in main.go
-- **Database Connection**: Include `TimeZone=UTC` in DSN
-- **GORM Configuration**: Use custom `NowFunc` that returns UTC
-
 ### Connection Pool Configuration
 - **Required Settings**: Always configure MaxOpenConns, MaxIdleConns, ConnMaxLifetime
 - **Environment Driven**: Make pool settings configurable via environment variables
@@ -369,3 +364,104 @@ This structure provides a scalable, maintainable foundation for Go backend servi
 - **README Index**: Maintain journal/README.md with current sprint status
 
 This approach provides lightweight task tracking while maintaining development audit trail.
+
+## Go Coding Conventions
+
+### Variable Naming
+- **Short Names**: Use abbreviated variable names for commonly used variables
+  - `config` → `cfg` 
+  - `database` → `db`
+  - `context` → `ctx`
+  - `request` → `req`
+  - `response` → `resp`
+- **Clean Structure**: Prioritize readability and concise code
+
+### Struct Organization
+- **No Line Breaks**: Never add line breaks within ANY struct definition
+- **Compact Format**: All struct fields should be consecutive without empty lines
+- **Universal Rule**: Applies to all structs (Config, models, DTOs, etc.)
+
+```go
+// Good - compact and clean (applies to ALL structs)
+type User struct {
+    ID          string     `gorm:"column:id"`
+    Email       string     `gorm:"column:email"`
+    PasswordHash string    `gorm:"column:password_hash"`
+    FirstName   string     `gorm:"column:first_name"`
+    LastName    string     `gorm:"column:last_name"`
+    Role        string     `gorm:"column:role"`
+    Status      string     `gorm:"column:status"`
+    CreatedDate time.Time  `gorm:"column:created_date"`
+    UpdatedDate time.Time  `gorm:"column:updated_date"`
+    DeletedDate *time.Time `gorm:"column:deleted_date"`
+}
+
+type Config struct {
+    DBHost                string `envconfig:"DB_HOST" required:"true"`
+    DBPort                int    `envconfig:"DB_PORT" required:"true"`
+    DBUser                string `envconfig:"DB_USER" required:"true"`
+    DBPassword            string `envconfig:"DB_PASSWORD" required:"true"`
+    DBName                string `envconfig:"DB_NAME" required:"true"`
+    DBMaxOpenConns        int    `envconfig:"DB_MAX_OPEN_CONNS" required:"true"`
+    DBMaxIdleConns        int    `envconfig:"DB_MAX_IDLE_CONNS" required:"true"`
+    DBConnMaxLifetime     int    `envconfig:"DB_CONN_MAX_LIFETIME" required:"true"`
+    ServerHost            string `envconfig:"SERVER_HOST" required:"true"`
+    ServerPort            string `envconfig:"SERVER_PORT" required:"true"`
+    JWTSecret             string `envconfig:"JWT_SECRET" required:"true"`
+    JWTExpiryHours        int    `envconfig:"JWT_EXPIRY_HOURS" required:"true"`
+    JWTRefreshExpiryHours int    `envconfig:"JWT_REFRESH_EXPIRY_HOURS" required:"true"`
+}
+
+// Bad - unnecessary line breaks (NEVER do this for any struct)
+type User struct {
+    ID          string     `gorm:"column:id"`
+    Email       string     `gorm:"column:email"`
+    
+    FirstName   string     `gorm:"column:first_name"`
+    LastName    string     `gorm:"column:last_name"`
+    
+    CreatedDate time.Time  `gorm:"column:created_date"`
+    UpdatedDate time.Time  `gorm:"column:updated_date"`
+}
+```
+
+### Error Handling
+- **Main Function**: Always use `panic(err)` for error handling in main.go
+- **Consistent Pattern**: Use the standard `if err != nil { panic(err) }` format
+- **No log.Fatal**: Never use `log.Fatal()` - use panic instead
+
+```go
+// Good - panic pattern
+if err := envconfig.Process("BOOKMS", &cfg); err != nil {
+    panic(err)
+}
+
+if err := e.Start(cfg.ServerAddress()); err != nil {
+    panic(err)
+}
+
+// Bad - log.Fatal pattern  
+if err := envconfig.Process("BOOKMS", &cfg); err != nil {
+    log.Fatal("Failed to load configuration:", err)
+}
+```
+
+### Code Style Priorities
+- **Conciseness**: Favor shorter, cleaner code over verbose implementations
+- **Readability**: Code should be self-documenting through good naming
+- **Consistency**: Apply naming conventions uniformly across the codebase
+
+## CLAUDE.md Maintenance Rules
+
+### Conflict Prevention
+- **Always Check**: Before adding new rules or sections, search the entire document for conflicting guidance
+- **Remove Conflicts**: When updating practices, remove or update conflicting sections
+- **Consistency Review**: New additions should align with existing patterns and conventions
+- **Single Source of Truth**: Each topic should have only one authoritative section
+
+### Update Process
+1. Read the entire CLAUDE.md before making changes
+2. Search for existing guidance on the same topic
+3. Identify and resolve conflicts
+4. Update or remove outdated sections
+5. Verify consistency across the document
