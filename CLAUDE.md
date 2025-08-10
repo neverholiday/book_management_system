@@ -263,3 +263,38 @@ golangci-lint run
 - **Rate Limiting**: Implement per-endpoint rate limiting as needed
 
 This structure provides a scalable, maintainable foundation for Go backend services in a monorepo architecture.
+
+## Task Management and Documentation
+
+### Development Journal - Sprint System
+- **Location**: Always create a `journal/` directory in the project root
+- **Sprint Files**: Use `SPRINT_YYYY-MM-DD.md` format (e.g., `SPRINT_2025-08-10.md`, `SPRINT_2025-08-17.md`)
+- **Task Organization**: Group related tasks in sprints for flexible management
+- **Simple Format**: Keep task descriptions concise with short action descriptions
+
+### Sprint File Format
+```markdown
+# SPRINT YYYY-MM-DD - Sprint Name
+
+**Started:** YYYY-MM-DD
+**Status:** 🚧 IN PROGRESS / ✅ COMPLETED
+
+## Tasks
+
+- [x] **Task XX**: Short description
+  - Brief action taken
+  - Key files modified
+
+- [ ] **Task XX**: Short description
+  - What needs to be done
+
+## Progress: X/Y completed
+```
+
+### Sprint Management
+- **Flexibility**: Tasks can be moved between sprints as needed
+- **Breakdown**: Large tasks can be split across multiple sprints
+- **Progress Tracking**: Simple checkbox format with progress counter
+- **README Index**: Maintain journal/README.md with current sprint status
+
+This approach provides lightweight task tracking while maintaining development audit trail.
