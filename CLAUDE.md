@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Documentation
+
+Comprehensive documentation for this repository is available in the `docs/` directory
+
+Always refer to these specification documents when implementing features to ensure consistency with the defined architecture and data models.
+
 ## Project Status
 
 This is a Go backend monorepo using Echo framework, PostgreSQL database with GORM, and envconfig for configuration management. The project follows a service-oriented architecture within a monorepo structure.
