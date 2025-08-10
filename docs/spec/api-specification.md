@@ -16,21 +16,18 @@ Authorization: Bearer <jwt_token>
 
 ## Response Format
 
-### Success Response
+### Success Response (200 OK)
 ```json
 {
-  "success": true,
   "data": <response_data>,
-  "message": "Operation completed successfully"
+  "message": "<message from API>"
 }
 ```
 
-### Error Response
+### Error Response (4xx, 5xx)
 ```json
 {
-  "success": false,
-  "error": "Error message",
-  "code": "ERROR_CODE"
+  "message": "<response or some error message>"
 }
 ```
 
@@ -51,13 +48,12 @@ POST /auth/register
 }
 ```
 
-**Response (201):**
+**Response (200):**
 ```json
 {
-  "success": true,
   "data": {
     "user": {
-      "id": 1,
+      "id": "user_12345",
       "email": "user@example.com",
       "first_name": "John",
       "last_name": "Doe",
@@ -65,7 +61,8 @@ POST /auth/register
       "status": "active"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
+  },
+  "message": "User registered successfully"
 }
 ```
 
@@ -85,10 +82,9 @@ POST /auth/login
 **Response (200):**
 ```json
 {
-  "success": true,
   "data": {
     "user": {
-      "id": 1,
+      "id": "user_12345",
       "email": "user@example.com",
       "first_name": "John",
       "last_name": "Doe",
@@ -97,7 +93,8 @@ POST /auth/login
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "expires_at": "2024-01-15T12:00:00Z"
-  }
+  },
+  "message": "Login successful"
 }
 ```
 
@@ -110,11 +107,11 @@ POST /auth/refresh
 **Response (200):**
 ```json
 {
-  "success": true,
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "expires_at": "2024-01-16T12:00:00Z"
-  }
+  },
+  "message": "Token refreshed successfully"
 }
 ```
 
@@ -127,17 +124,17 @@ GET /auth/profile
 **Response (200):**
 ```json
 {
-  "success": true,
   "data": {
-    "id": 1,
+    "id": "user_12345",
     "email": "user@example.com",
     "first_name": "John",
     "last_name": "Doe",
     "role": "member",
     "status": "active",
-    "created_at": "2024-01-01T12:00:00Z",
-    "updated_at": "2024-01-01T12:00:00Z"
-  }
+    "created_date": "2024-01-01T12:00:00Z",
+    "updated_date": "2024-01-01T12:00:00Z"
+  },
+  "message": "Profile retrieved successfully"
 }
 ```
 
@@ -164,7 +161,7 @@ POST /auth/logout
 **Response (200):**
 ```json
 {
-  "success": true,
+  "data": null,
   "message": "Logged out successfully"
 }
 ```
@@ -204,24 +201,24 @@ GET /users?limit=20&offset=0&role=member&status=active
 **Response (200):**
 ```json
 {
-  "success": true,
   "data": {
     "users": [
       {
-        "id": 1,
+        "id": "user_12345",
         "email": "user@example.com",
         "first_name": "John",
         "last_name": "Doe",
         "role": "member",
         "status": "active",
-        "created_at": "2024-01-01T12:00:00Z",
-        "updated_at": "2024-01-01T12:00:00Z"
+        "created_date": "2024-01-01T12:00:00Z",
+        "updated_date": "2024-01-01T12:00:00Z"
       }
     ],
     "total": 1,
     "limit": 20,
     "offset": 0
-  }
+  },
+  "message": "Users retrieved successfully"
 }
 ```
 
@@ -271,11 +268,10 @@ GET /books?limit=20&offset=0&title=&author=&genre=&isbn=
 **Response (200):**
 ```json
 {
-  "success": true,
   "data": {
     "books": [
       {
-        "id": 1,
+        "id": "book_67890",
         "title": "The Go Programming Language",
         "author": "Alan Donovan, Brian Kernighan",
         "isbn": "978-0134190440",
@@ -290,14 +286,15 @@ GET /books?limit=20&offset=0&title=&author=&genre=&isbn=
         "available_quantity": 3,
         "location": "Shelf A-1",
         "status": "available",
-        "created_at": "2024-01-01T12:00:00Z",
-        "updated_at": "2024-01-01T12:00:00Z"
+        "created_date": "2024-01-01T12:00:00Z",
+        "updated_date": "2024-01-01T12:00:00Z"
       }
     ],
     "total": 1,
     "limit": 20,
     "offset": 0
-  }
+  },
+  "message": "Books retrieved successfully"
 }
 ```
 
@@ -353,7 +350,6 @@ DELETE /books/:id
 ## HTTP Status Codes
 
 - `200 OK`: Successful GET, PUT operations
-- `201 Created`: Successful POST operations
 - `400 Bad Request`: Invalid request data
 - `401 Unauthorized`: Missing or invalid authentication token
 - `403 Forbidden`: Insufficient permissions (not admin)

@@ -162,8 +162,15 @@ func (r *EntityRepository) Delete(id uint) error
 ### Handler Structure
 - **Constructor Pattern**: Use `NewEntityHandler(repo)` constructor
 - **HTTP Methods**: Map to CRUD operations (POST=Create, GET=Read, PUT=Update, DELETE=Delete)
-- **Error Responses**: Return consistent JSON error responses
+- **Response Format**: Follow consistent JSON response format
 - **Status Codes**: Use appropriate HTTP status codes
+
+### Response Format Rules
+- **Success Response (200 OK)**: Always return `{"data": <response_data>, "message": "<message from API>"}`
+- **Error Response (4xx, 5xx)**: Always return `{"message": "<response or some error message>"}`
+- **No Success Field**: Never include `success` boolean field in responses
+- **Consistent Structure**: Success responses always have both `data` and `message` fields
+- **Error Simplicity**: Error responses only contain `message` field
 
 ### Route Organization
 - **RESTful Patterns**: Follow REST conventions for URLs
