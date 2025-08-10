@@ -93,6 +93,22 @@ type Config struct {
 
 ## Database Model Rules
 
+### Primary Key and ID Fields
+- **ID Type**: All primary keys must be `VARCHAR(100)` - never use auto-increment integers
+- **ID Generation**: Let the application generate ID values, not the database
+- **GORM ID Field**: Use `string` type in Go structs for ID fields
+
+### Column Design Rules
+- **No Default Values**: Never specify DEFAULT values in database schema - let the program choose defaults
+- **NOT NULL Required**: All entity properties must be NOT NULL (except soft delete fields)
+- **Explicit Nullability**: Only allow NULL for optional fields like soft delete timestamps
+
+### Timestamp Fields
+- **Time Type**: Use `timestamptz` (PostgreSQL) for all timestamp fields
+- **Standard Fields**: Include `created_date`, `updated_date`, and `deleted_date` for all entities
+- **Soft Delete**: `deleted_date` should be NULL by default - when NOT NULL, record is considered deleted
+- **UTC Timezone**: All time fields should use UTC
+
 ### GORM Tags
 - **Column Mapping Only**: Use only `gorm:"column:<column_name>"` tags
 - **No Constraints**: Do not include database constraints in struct tags
@@ -100,18 +116,19 @@ type Config struct {
 - **Explicit Naming**: Always specify column names explicitly
 
 ```go
-// Example model structure
+// Example model structure following the rules
 type Entity struct {
-    ID        uint      `gorm:"column:id"`
-    Name      string    `gorm:"column:name"`
-    CreatedAt time.Time `gorm:"column:created_at"`
-    UpdatedAt time.Time `gorm:"column:updated_at"`
+    ID          string     `gorm:"column:id"`
+    Name        string     `gorm:"column:name"`
+    CreatedDate time.Time  `gorm:"column:created_date"`
+    UpdatedDate time.Time  `gorm:"column:updated_date"`
+    DeletedDate *time.Time `gorm:"column:deleted_date"`
 }
 ```
 
 ### Model Conventions
-- **Standard Fields**: Include `ID`, `CreatedAt`, `UpdatedAt` for all entities
-- **UTC Timezone**: All time fields should use UTC
+- **Standard Fields**: Include `ID` (string), `CreatedDate`, `UpdatedDate`, `DeletedDate` for all entities
+- **Soft Delete Logic**: Use `deleted_date IS NULL` for active records, `IS NOT NULL` for deleted
 - **Package Location**: Models go in `cmd/<service>/models/<entity>.go`
 
 ## Repository Pattern Rules
