@@ -374,6 +374,8 @@ This approach provides lightweight task tracking while maintaining development a
   - `context` → `ctx`
   - `request` → `req`
   - `response` → `resp`
+- **Modern Types**: Use modern Go type aliases (Go 1.18+)
+  - `interface{}` → `any`
 - **Clean Structure**: Prioritize readability and concise code
 
 ### Struct Organization
@@ -445,6 +447,34 @@ if err := envconfig.Process("BOOKMS", &cfg); err != nil {
     log.Fatal("Failed to load configuration:", err)
 }
 ```
+
+### Package Location Best Practices
+
+#### Shared Packages (`pkg/` Directory)
+- **Multi-Service Usage**: Use `pkg/` for code that can be imported by multiple services within the monorepo
+- **Shared Libraries**: Place reusable packages that multiple `cmd/` services need in `pkg/`
+- **Interface-based Design**: Use interfaces to decouple pkg packages from specific implementations
+- **No Service Dependencies**: `pkg/` packages should never import from `cmd/` directories
+- **Examples**: `pkg/auth`, `pkg/logger`, `pkg/metrics`, `pkg/database` for cross-service functionality
+
+#### Service-Specific Packages (`cmd/<service>/` Directory)
+- **Single Service Usage**: Keep packages that are only used by one service within that service's directory
+- **Service Boundaries**: Each service maintains its own `models/`, `apis/`, `repositories/` packages
+- **No Cross-Service Imports**: Services should not import from other `cmd/<service>/` directories
+- **Clear Ownership**: Service-specific packages belong to that service and follow its lifecycle
+- **Examples**: `cmd/server_api/models/`, `cmd/worker/handlers/`, `cmd/cli/commands/`
+
+#### Decision Guidelines
+- **Multiple Services Need It**: Use `pkg/` (e.g., JWT auth, logging, metrics)
+- **Single Service Only**: Keep in `cmd/<service>/` (e.g., specific API models, handlers)
+- **Future Sharing Possible**: Start in `cmd/<service>/`, move to `pkg/` when needed by second service
+- **External Dependencies**: Business logic specific to one service stays in `cmd/<service>/`
+
+### Package Naming Best Practices
+- **Descriptive Names**: Use specific, descriptive package names that indicate purpose
+- **Avoid Generic Names**: Never use `utils`, `helpers`, `common`, or `shared` packages
+- **Purpose-driven**: Name packages by what they provide, not how they're used
+- **Examples**: `auth` (not `utils`), `http` (not `helpers`), `storage` (not `common`)
 
 ### Code Style Priorities
 - **Conciseness**: Favor shorter, cleaner code over verbose implementations

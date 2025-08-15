@@ -14,3 +14,15 @@ type User struct {
 	UpdatedDate  time.Time  `gorm:"column:updated_date"`
 	DeletedDate  *time.Time `gorm:"column:deleted_date"`
 }
+
+func (u *User) GetID() string {
+	return u.ID
+}
+
+func (u *User) GetEmail() string {
+	return u.Email
+}
+
+func (u *User) GetRole() string {
+	return u.Role
+}
