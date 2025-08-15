@@ -1,17 +1,18 @@
 package main
 
 import (
+	"book-management-system/cmd/server_api/apis"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	slogGorm "github.com/orandin/slog-gorm"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type Config struct {
@@ -31,12 +32,22 @@ type Config struct {
 }
 
 func (c *Config) DSN() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
-		c.DBHost, c.DBPort, c.DBUser, c.DBPassword, c.DBName)
+	return fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
+		c.DBHost,
+		c.DBPort,
+		c.DBUser,
+		c.DBPassword,
+		c.DBName,
+	)
 }
 
 func (c *Config) ServerAddress() string {
-	return fmt.Sprintf("%s:%s", c.ServerHost, c.ServerPort)
+	return fmt.Sprintf(
+		"%s:%s",
+		c.ServerHost,
+		c.ServerPort,
+	)
 }
 
 func init() {
@@ -46,75 +57,111 @@ func init() {
 func main() {
 
 	var cfg Config
-	if err := envconfig.Process("BOOKMS", &cfg); err != nil {
-		panic(err)
-	}
-
-	db, err := setupDatabase(&cfg)
+	err := envconfig.Process(
+		"BOOKMS",
+		&cfg,
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	e := setupServer()
+	gormLogger := slogGorm.New()
 
-	setupRoutes(e, db)
-
-	log.Printf("Server starting on %s", cfg.ServerAddress())
-	if err := e.Start(cfg.ServerAddress()); err != nil {
-		panic(err)
-	}
-}
-
-func setupDatabase(config *Config) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(config.DSN()), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-		NowFunc: func() time.Time {
-			return time.Now().UTC()
+	db, err := gorm.Open(
+		postgres.Open(
+			cfg.DSN(),
+		),
+		&gorm.Config{
+			Logger: gormLogger,
+			NowFunc: func() time.Time {
+				return time.Now().UTC()
+			},
 		},
-	})
+	)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	sqlDB.SetMaxOpenConns(config.DBMaxOpenConns)
-	sqlDB.SetMaxIdleConns(config.DBMaxIdleConns)
-	sqlDB.SetConnMaxLifetime(time.Duration(config.DBConnMaxLifetime) * time.Second)
+	defer sqlDB.Close()
 
-	log.Printf("Database connection established - MaxOpen: %d, MaxIdle: %d, MaxLifetime: %ds",
-		config.DBMaxOpenConns, config.DBMaxIdleConns, config.DBConnMaxLifetime)
+	sqlDB.SetMaxOpenConns(
+		cfg.DBMaxOpenConns,
+	)
+	sqlDB.SetMaxIdleConns(
+		cfg.DBMaxIdleConns,
+	)
+	sqlDB.SetConnMaxLifetime(
+		time.Duration(
+			cfg.DBConnMaxLifetime,
+		) * time.Second,
+	)
 
-	return db, nil
-}
+	err = sqlDB.Ping()
+	if err != nil {
+		panic(err)
+	}
 
-func setupServer() *echo.Echo {
+	slog.Info(
+		"Database connection established",
+		"max_open_conns", cfg.DBMaxOpenConns,
+		"max_idle_conns", cfg.DBMaxIdleConns,
+		"conn_max_lifetime", cfg.DBConnMaxLifetime,
+	)
+
 	e := echo.New()
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-
-	return e
-}
-
-func setupRoutes(e *echo.Echo, db *gorm.DB) {
-	e.GET("/healthz", func(c echo.Context) error {
-		return c.JSON(200, map[string]any{
-			"data": map[string]any{
-				"status":    "healthy",
-				"timestamp": time.Now().UTC(),
-				"version":   "1.0.0",
+	e.Use(
+		middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+			LogStatus:   true,
+			LogURI:      true,
+			LogError:    true,
+			LogLatency:  true,
+			LogMethod:   true,
+			LogRemoteIP: true,
+			LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+				if v.Error == nil {
+					slog.InfoContext(c.Request().Context(), "request",
+						"method", v.Method,
+						"uri", v.URI,
+						"status", v.Status,
+						"latency", v.Latency,
+						"remote_ip", v.RemoteIP,
+					)
+				} else {
+					slog.ErrorContext(c.Request().Context(), "request_error",
+						"method", v.Method,
+						"uri", v.URI,
+						"status", v.Status,
+						"latency", v.Latency,
+						"remote_ip", v.RemoteIP,
+						"error", v.Error,
+					)
+				}
+				return nil
 			},
-			"message": "Service is healthy",
-		})
-	})
+		}),
+	)
+	e.Use(
+		middleware.Recover(),
+	)
 
-	api := e.Group("/api/v1")
+	rootg := e.Group("")
+	apis.NewHealthzAPI(
+		db,
+	).Setup(
+		rootg,
+	)
 
-	_ = api
+	slog.Info("Server starting", "address", cfg.ServerAddress())
+	err = e.Start(
+		cfg.ServerAddress(),
+	)
+	if err != nil {
+		panic(err)
+	}
+
 }
-

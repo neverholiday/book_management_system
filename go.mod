@@ -3,9 +3,9 @@ module book-management-system
 go 1.23.0
 
 require (
-	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo/v4 v4.13.4
+	github.com/orandin/slog-gorm v1.4.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.1
 )

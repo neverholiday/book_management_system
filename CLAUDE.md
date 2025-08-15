@@ -451,6 +451,152 @@ if err := envconfig.Process("BOOKMS", &cfg); err != nil {
 - **Readability**: Code should be self-documenting through good naming
 - **Consistency**: Apply naming conventions uniformly across the codebase
 
+## Logging System Rules
+
+### Standard Logging with slog
+- **Primary Logger**: Always use Go's standard `log/slog` package for structured logging
+- **JSON Format**: Use `slog.NewJSONHandler` for production-ready structured logs
+- **Default Setup**: Set slog as the default logger with `slog.SetDefault()`
+- **Context Logging**: Use `slog.InfoContext()` and `slog.ErrorContext()` for request-scoped logging
+
+### GORM Logging Integration
+- **Package**: Use `github.com/orandin/slog-gorm` for GORM-slog integration
+- **Simple Setup**: `gormLogger := slogGorm.New()` provides automatic slog integration
+- **No Custom Loggers**: Avoid writing custom GORM logger adapters - use established packages
+
+### Echo Logging Integration
+- **Request Logging**: Use `middleware.RequestLoggerWithConfig` with custom `LogValuesFunc`
+- **Structured Data**: Log method, URI, status, latency, remote IP as structured fields
+- **Error Distinction**: Separate logging for successful requests vs errors
+- **Context Awareness**: Use request context for all HTTP-related logging
+
+### slog Structured Logging Style
+- **Multi-line**: Break slog calls across lines when multiple fields are present
+- **Field Alignment**: Each key-value pair on its own line
+- **Descriptive Keys**: Use clear, consistent field names
+
+```go
+// Good - structured multi-line slog
+slog.Info("Database connection established",
+    "max_open_conns", cfg.DBMaxOpenConns,
+    "max_idle_conns", cfg.DBMaxIdleConns,
+    "conn_max_lifetime", cfg.DBConnMaxLifetime,
+)
+```
+
+## Docker Development Rules
+
+### Development Database Setup
+- **Docker Compose**: Always provide `docker-compose.yml` for development databases
+- **Generic Credentials**: Use simple, generic credentials for development (postgres/password/myapp)
+- **Health Checks**: Include health check configuration for database readiness
+- **Persistent Volumes**: Use named volumes for data persistence
+- **Standard Ports**: Expose standard database ports (5432 for PostgreSQL)
+
+### Container Standards
+- **Alpine Images**: Prefer Alpine variants for smaller image sizes (postgres:15-alpine)
+- **Container Naming**: Use descriptive but simple container names
+- **Environment Variables**: Match container environment with application .env configuration
+
+```yaml
+# Example docker-compose.yml
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d myapp"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
+```
+
+## API Implementation Patterns
+
+### API Structure and Organization
+- **Package Location**: All API handlers go in `cmd/<service>/apis/` directory
+- **File Naming**: Use `<entity>.go` naming convention (e.g., `healthz.go`, `user.go`, `book.go`)
+- **Constructor Pattern**: Use `New<Entity>API(dependencies)` constructor functions
+- **Setup Method**: Each API struct should have a `Setup(group *echo.Group)` method for route registration
+
+### API Constructor Pattern
+```go
+// Example API structure
+type HealthzAPI struct {
+    db *gorm.DB
+}
+
+func NewHealthzAPI(db *gorm.DB) *HealthzAPI {
+    return &HealthzAPI{
+        db: db,
+    }
+}
+
+func (api *HealthzAPI) Setup(group *echo.Group) {
+    group.GET("/healthz", api.healthCheck)
+}
+```
+
+### Route Registration Pattern
+- **Group-based Registration**: Use Echo groups for organizing routes
+- **Dependency Injection**: Pass required dependencies (database, services) to constructors
+- **Method Binding**: Bind HTTP methods to struct methods in Setup function
+- **Chainable Setup**: API setup should be chainable with constructor
+
+```go
+// Main.go route registration pattern
+rootg := e.Group("")
+apis.NewHealthzAPI(db).Setup(rootg)
+
+apiV1 := e.Group("/api/v1")
+apis.NewUserAPI(db).Setup(apiV1)
+apis.NewBookAPI(db).Setup(apiV1)
+```
+
+### API Method Conventions
+- **Handler Signature**: All handlers should follow `func (api *API) method(c echo.Context) error`
+- **Error Handling**: Use consistent error response format
+- **Response Format**: Follow established success/error response patterns from previous sections
+- **Context Usage**: Use `c.Request().Context()` for request-scoped operations
+
+## Multi-line Function Call Style Rules
+
+### Consistent Multi-line Formatting
+- **Universal Application**: Apply to all function calls, method calls, and struct initialization
+- **Parameter Alignment**: Each parameter gets its own line when breaking across lines
+- **Closing Parenthesis**: Place closing parenthesis on separate line aligned with function call
+
+```go
+// Good - consistent multi-line style
+err := envconfig.Process(
+    "BOOKMS",
+    &cfg,
+)
+
+db, err := gorm.Open(
+    postgres.Open(
+        cfg.DSN(),
+    ),
+    &gorm.Config{
+        Logger: gormLogger,
+        NowFunc: func() time.Time {
+            return time.Now().UTC()
+        },
+    },
+)
+```
+
 ## CLAUDE.md Maintenance Rules
 
 ### Conflict Prevention
