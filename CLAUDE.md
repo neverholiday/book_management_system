@@ -451,6 +451,44 @@ if err := envconfig.Process("BOOKMS", &cfg); err != nil {
 - **Readability**: Code should be self-documenting through good naming
 - **Consistency**: Apply naming conventions uniformly across the codebase
 
+### Code Cleanliness Rules
+- **No Comments by Default**: Write clean, self-documenting code without comments
+- **Descriptive Naming**: Use clear function and variable names that explain purpose
+- **Comment Only When Complex**: Add comments only for complicated logic that needs explanation
+- **Self-Documenting Code**: Code should be readable without requiring comments to understand
+
+```go
+// Good - clean, self-documenting code
+func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
+    var user models.User
+    err := r.db.Where("email = ? AND deleted_date IS NULL", email).First(&user).Error
+    if err != nil {
+        return nil, err
+    }
+    return &user, nil
+}
+
+// Bad - unnecessary comments
+func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
+    // Create a user variable to store the result
+    var user models.User
+    // Query the database for user by email, excluding soft deleted records
+    err := r.db.Where("email = ? AND deleted_date IS NULL", email).First(&user).Error
+    // Check if there was an error
+    if err != nil {
+        return nil, err
+    }
+    // Return the user
+    return &user, nil
+}
+```
+
+### When to Add Comments
+- **Complex Business Logic**: Algorithms or calculations that aren't immediately obvious
+- **External Dependencies**: Integration points with third-party services
+- **Performance Considerations**: Code optimized in non-obvious ways
+- **Regulatory Requirements**: Code that implements specific compliance rules
+
 ## Logging System Rules
 
 ### Standard Logging with slog
