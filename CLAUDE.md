@@ -498,6 +498,43 @@ slog.Info("Database connection established",
 - **Container Naming**: Use descriptive but simple container names
 - **Environment Variables**: Match container environment with application .env configuration
 
+### Database Schema Management
+- **Schema Location**: Store complete database schema in `init/init.sql`
+- **Docker Integration**: Mount init.sql to `/docker-entrypoint-initdb.d/init.sql` in PostgreSQL container
+- **Automatic Initialization**: PostgreSQL will execute init.sql on first container startup
+- **Schema Control**: Maintain full control over table creation, indexes, and constraints
+- **No Auto-Migration**: Avoid GORM AutoMigrate in favor of explicit schema management
+
+### Database Initialization Pattern
+```yaml
+# docker-compose.yml volume configuration
+volumes:
+  - postgres_data:/var/lib/postgresql/data
+  - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
+```
+
+### Schema File Structure
+```sql
+-- init/init.sql structure
+-- Create tables with explicit column definitions
+CREATE TABLE table_name (
+    id VARCHAR(100) PRIMARY KEY,
+    -- ... other columns
+    created_date timestamptz NOT NULL,
+    updated_date timestamptz NOT NULL,
+    deleted_date timestamptz
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_table_field ON table_name(field);
+CREATE UNIQUE INDEX idx_table_unique ON table_name(unique_field);
+```
+
+### Database Reset Process
+- **Complete Reset**: `docker-compose down -v && docker-compose up -d`
+- **Volume Removal**: `-v` flag removes named volumes and triggers re-initialization
+- **Fresh Start**: New containers will execute init.sql automatically
+
 ```yaml
 # Example docker-compose.yml
 services:
