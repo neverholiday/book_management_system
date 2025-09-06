@@ -2,6 +2,8 @@ package main
 
 import (
 	"book-management-system/cmd/server_api/apis"
+	"book-management-system/cmd/server_api/repositories"
+	"book-management-system/pkg/auth"
 	"fmt"
 	"log/slog"
 	"os"
@@ -149,11 +151,48 @@ func main() {
 		middleware.Recover(),
 	)
 
+	userRepo := repositories.NewUserRepository(db)
+	bookRepo := repositories.NewBookRepository(db)
+	jwtAuth := auth.NewJWT(
+		cfg.JWTSecret,
+		cfg.JWTExpiryHours,
+		cfg.JWTRefreshExpiryHours,
+	)
+
 	rootg := e.Group("")
 	apis.NewHealthzAPI(
 		db,
 	).Setup(
 		rootg,
+	)
+
+	apiGroup := e.Group("/api")
+	v1Group := apiGroup.Group("/v1")
+
+	authMw := auth.NewMiddleware(jwtAuth)
+
+	authGroup := v1Group.Group("/auth")
+	apis.NewAuthAPI(
+		userRepo,
+		jwtAuth,
+	).Setup(
+		authGroup,
+	)
+
+	usersGroup := v1Group.Group("/users")
+	apis.NewUserAPI(
+		userRepo,
+		authMw,
+	).Setup(
+		usersGroup,
+	)
+
+	booksGroup := v1Group.Group("/books")
+	apis.NewBookAPI(
+		bookRepo,
+		authMw,
+	).Setup(
+		booksGroup,
 	)
 
 	slog.Info("Server starting", "address", cfg.ServerAddress())

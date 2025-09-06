@@ -172,11 +172,36 @@ func (r *EntityRepository) Delete(id uint) error
 - **Consistent Structure**: Success responses always have both `data` and `message` fields
 - **Error Simplicity**: Error responses only contain `message` field
 
-### Route Organization
-- **RESTful Patterns**: Follow REST conventions for URLs
-- **API Versioning**: Use `/api/v1/` prefix for main API routes
-- **Route Groups**: Group related routes together
-- **Health Check**: Always include `/healthz` endpoint for service health monitoring
+### API Versioning and Route Organization
+- **Versioning Structure**: Use `/api/v{version}/` for all API routes (e.g., `/api/v1/`, `/api/v2/`)
+- **Version Groups**: Create separate Echo groups for each API version to enable parallel versions
+- **Backward Compatibility**: Maintain older API versions during transition periods
+- **Route Groups**: Group related routes together within each version
+- **Health Check**: Always include `/healthz` endpoint for service health monitoring (no versioning)
+
+#### API Group Structure Pattern
+```go
+// Main API group
+apiGroup := e.Group("/api")
+
+// Version-specific groups
+v1Group := apiGroup.Group("/v1")
+v2Group := apiGroup.Group("/v2")  // Future version
+
+// Feature groups within versions
+authV1 := v1Group.Group("/auth")
+usersV1 := v1Group.Group("/users")
+booksV1 := v1Group.Group("/books")
+
+authV2 := v2Group.Group("/auth")  // Different implementation
+```
+
+#### Versioning Best Practices
+- **Start with v1**: Always begin with `/api/v1/` even for initial release
+- **Breaking Changes**: Increment major version for breaking changes (v1 → v2)
+- **Non-breaking Changes**: Keep same version for backward-compatible additions
+- **Migration Path**: Provide clear migration documentation between versions
+- **Deprecation Notice**: Add deprecation headers for older versions before removal
 
 ```go
 // Example route structure
